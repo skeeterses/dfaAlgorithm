@@ -31,6 +31,8 @@ package dfa is
 	          end case;
 	end record;
 
+        package U_Operator_IO is new Ada.Text_IO.Enumeration_IO(U_Operator);
+	package B_Operator_IO is new Ada.Text_IO.Enumeration_IO(B_Operator);
 
 end dfa;
 
