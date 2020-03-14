@@ -1,7 +1,3 @@
-with Ada.Text_IO;
---The Text_IO and the new Enumeration_IO package will be used for debugging
---  the tree
---
 --  Dfa.ads
 --  3/13/2020
 --  Scott Stinson
@@ -10,7 +6,8 @@ with Ada.Text_IO;
 --    from the DFAs, creating FSM transition tables in C.
 
 package dfa is
-        type SyntaxNodeType is (UnaryOperator, BinaryOperator, ascii);
+        type SyntaxNode;
+	type SyntaxNodeType is (UnaryOperator, BinaryOperator, ascii);
 	type U_Operator is (star, plus, question);
 	type B_Operator is (or_symbol, dot);
 
@@ -20,19 +17,18 @@ package dfa is
      	type SyntaxNode(inputType : SyntaxNodeType := ascii) is record
 		case inputType is
 		  when UnaryOperator =>
-			  Value : U_Operator;
+			  U_Value : U_Operator;
 			  SubNode : SyntaxNodePtr;
 		  when BinaryOperator =>
-			  Value : B_Operator;
+			  B_Value : B_Operator;
 			  LeftNode : SyntaxNodePtr;
 			  RightNode : SyntaxNodePtr;
 		  when ascii =>
-			  Value : Character;
+			  A_Value : Character;
 	          end case;
 	end record;
 
-        package U_Operator_IO is new Ada.Text_IO.Enumeration_IO(U_Operator);
-	package B_Operator_IO is new Ada.Text_IO.Enumeration_IO(B_Operator);
+	procedure PrintNode(inputNode : SyntaxNode);
 
 end dfa;
 
