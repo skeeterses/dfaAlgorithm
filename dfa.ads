@@ -5,6 +5,8 @@
 --    for reading regular expressions and then creating DFAs and then
 --    from the DFAs, creating FSM transition tables in C.
 
+with ada.Unchecked_Deallocation;
+
 package dfa is
         type SyntaxNode;
 	type SyntaxNodeType is (UnaryOperator, BinaryOperator, ascii);
@@ -27,6 +29,9 @@ package dfa is
 			  A_Value : Character;
 	          end case;
 	end record;
+
+	procedure dispose is new Ada.Unchecked_Deallocation
+	    (Object => SyntaxNode, Name => SyntaxNodePtr);
 
 	procedure PrintNode(inputNode : SyntaxNode);
 
