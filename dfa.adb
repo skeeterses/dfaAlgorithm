@@ -51,10 +51,71 @@ package body dfa is
 	-- characters and that a closed parenthesis is only special when 
 	-- matched by a preceding open parenthesis.  
 	-- If this program works well, I'll implement some of the special 
-	-- graphic characters by using the character attributes to get the ascii values.
+	-- graphic characters by using the character attributes to get the 
+	-- ascii values.
 
 	    return retValue;
     end ORD_CHAR;
+
+    function QUOTED_CHAR(inputString : in String) return boolean is
+	    retValue : boolean;
+    begin
+            retValue := false;
+            if inputString'length = 1 then
+		if inputString(inputString'first) = '\' then
+		    case inputString(inputString'first + 1) is
+			when '^' =>
+				return true;
+			when '.' =>
+				return true;
+			when '[' =>
+				return true;
+			when '$' =>
+				return true;
+			when '(' =>
+				return true;
+			when ')' =>
+				return true;
+			when '|' =>
+				return true;
+			when '*' =>
+				return true;
+			when '+' =>
+				return true;
+			when '?' =>
+				return true;
+			when '{' =>
+				return true;
+			when '\' =>
+				return true;
+			when others =>
+				return false;
+		end case;
+		end if;
+
+	    end if;
+	    return retValue;
+    end QUOTED_CHAR;
+
+    function SPEC_CHAR(testcharacter: in Character) return boolean
+    is
+    begin
+	case testCharacter is
+		when '^' => return true;
+		when '.' => return true;
+		when '[' => return true;
+		when '$' => return true;
+		when '(' => return true;
+		when ')' => return true;
+		when '|' => return true;
+		when '*' => return true;
+		when '+' => return true;
+		when '?' => return true;
+		when '{' => return true;
+		when '\' => return true;
+		when others => return false;
+	end case;
+    end SPEC_CHAR;
 
     function L_ANCHOR(testcharacter : in Character) return boolean
     is
@@ -98,37 +159,65 @@ package body dfa is
    end one_char_or_coll_elem_RE;
 
 
-   function RE_dupl_symbol(inputString : in String) return boolean is
-   begin
-	   return true;
-   end RE_dupl_symbol;
+--   function RE_dupl_symbol(inputString : in String) return boolean is
+--   begin
+--	   return true;
+--   end RE_dupl_symbol;
 
 --7/27/2020
 --   Bracket Expression
 
    function bracket_expression(inputString : in String) return boolean is
+	retValue : boolean;
+   	firstIndex, lastIndex : Integer;   
+        middleString : String(1..20);
    begin
-	   return true;
+	retValue := false;
+	firstIndex := inputString'first;
+	lastIndex := inputString'last;
+	if inputString'length >= 3 then
+          middleString := inputString(firstIndex+1 .. lastIndex-1);
+        end if;
+
+	if (inputString(firstIndex) = '[') and (inputString(lastIndex) = ']')
+	then
+	 retValue := (matching_List(middleString)) or
+	             (nonmatching_List(middleString)); 
+	end if;
+
+	return retValue;
    end bracket_expression;
 
    function matching_list(inputString : in String) return boolean is
    begin
-	   return true;
+	   return bracket_list(inputString);
    end matching_list;
 
    function nonmatching_list(inputString : in String) return boolean is
+     retValue : boolean;
    begin
-	   return true;
+	   retValue := false;
+	   if inputString(inputString'First) = '^' then
+		   return bracket_list(inputString(inputString'First+1 ..
+			                           inputString'Last));
+	   end if;
+	   return retValue;
    end nonmatching_list;
 
-   function bracket_list(inputString : in String) return boolean is
+   function bracket_list(inputString : in String) return boolean is    
    begin
-	   return true;
+      if inputString(inputString'Last) = '-' then
+	 return follow_list(
    end bracket_list;
 
+-- 8/4/2020
+   -- The grammar for follow_list is
+   -- follow_list :: 		   expression_term
+   --              | follow_list   expression_term
    function follow_list(inputString : in String) return boolean is
+	retValue : boolean;
    begin
-	   return true;
+	   
    end follow_list;
 
    function expression_term(inputString : in String) return boolean is
@@ -199,7 +288,11 @@ package body dfa is
 	if inputString'length = 1 then
            retValue := ORD_CHAR(inputString(inputString'first)) or
 	               (inputString(inputString'first) = '.');
+	else
+		retValue := QUOTED_CHAR(inputString) or
+				bracket_expression(inputString);	
 	end if;	
+	
 
 	   return retValue;
    end one_char_or_coll_elem_ERE;
