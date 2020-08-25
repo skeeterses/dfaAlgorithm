@@ -207,7 +207,10 @@ package body dfa is
    function bracket_list(inputString : in String) return boolean is    
    begin
       if inputString(inputString'Last) = '-' then
-	 return follow_list(
+   return follow_list(inputString(inputString'first .. inputString'last-1));
+      else
+	 return follow_list(inputString);
+      end if;
    end bracket_list;
 
 -- 8/4/2020
@@ -217,7 +220,27 @@ package body dfa is
    function follow_list(inputString : in String) return boolean is
 	retValue : boolean;
    begin
-	   
+	retValue := false;
+           if expression_term(inputString) then
+		   return true;
+	   else
+              declare
+		   ExpressionSubString : String(1 .. 20);
+		   FollowSubString : String(1 .. 20);
+	      begin
+	          if inputString'length > 1 then
+                     for index in inputString'first+1 .. inputString'last loop
+    ExpressionSubString := inputString(index..inputString'last);
+    FollowSubString := inputString(inputString'first .. index-1);
+                        if expression_term(ExpressionSubString) then
+			  return follow_list(followSubString);
+			end if;
+		     end loop;
+		  end if;		  
+	      end;
+	   end if;
+
+	return retValue;
    end follow_list;
 
    function expression_term(inputString : in String) return boolean is
@@ -240,14 +263,60 @@ package body dfa is
 	   return true;
    end start_range;
 
+
+   --   end_range :: COLL_ELEM_SINGLE
+   --              | collating_symbol
    function end_range(inputString : in String) return boolean is
    begin
-	   return true;
+	   if inputString'length = 1 then
+              return is_alphanumeric(inputString(inputString'first));
+	   else
+              return collating_symbol(inputString);
+	   end if;
    end end_range;
 
-   function collating_symbol(inputString : in String) return boolean is
+   function isAlphaNumericString(inputString : in String) return boolean is
+	retValue : boolean;
+     begin
+     retValue := true;
+       for index in inputString'first .. inputString'last loop
+         if is_alphaNumeric(inputString(index)) = false then
+		 return false;
+	 end if;
+       end loop;
+     return retValue;
+   end isAlphaNumericString;
+
+   function META_CHAR(testCharacter : character) return boolean is	   
    begin
-	   return true;
+        case testCharacter is
+		when '^' => return true;
+	        when '-' => return true;
+		when ']' => return true;
+		when others => return false;
+	end case;
+   end META_CHAR;
+
+-- collating_symbol :: Open_dot COLL_ELEM_SINGLE Dot_close
+   --                | Open_dot COLL_ELEM_MULTI Dot_close
+   --                | Open_dot META_CHAR Dot_close
+   function collating_symbol(inputString : in String) return boolean is
+      retValue : boolean;
+   begin
+      retValue := false;
+        if inputString(inputString'first) = '.' and 
+		inputString(inputString'last) = '.' then
+		if inputString'length = 3 then
+       retValue := is_Alphanumeric(inputString(inputString'first+1)) or
+                   META_CHAR(inputString(inputString'first+1));
+                   		          
+		else
+retValue := isAlphaNumericString(inputString(inputString'first+1..
+	                         inputString'last-1));
+                end if;
+          
+	end if;
+      return retValue;
    end collating_symbol;
 
    function equivalence_class(inputString : in String) return boolean is
@@ -264,19 +333,116 @@ package body dfa is
  --7/27/2020
 --  Extended Regular Expression
 
+-- extended_reg_exp :: 			    ERE_branch
+   -- 		     | extended_reg_exp '|' ERE_branch
+
    function extended_reg_exp(inputString : in String) return boolean is
+      retValue : boolean;      
    begin
-	   return true;
+      retValue := false;
+      retValue := ERE_branch(inputString);
+
+      -- Test second part of grammar by searching for '|'
+      if retValue = false then
+	      declare
+		      extended_regString : String(1..20);
+		      ERE_branchString : String(1..20);
+	      begin
+          if inputString'length > 2 then
+ 	  for index in reverse inputString'first+1 .. inputString'last-1 loop
+		  if inputString(index) = '|' then
+	ERE_branchString := inputString(index+1 .. inputString'last);
+	extended_regString := inputString(inputString'first .. index-1);
+ if ERE_branch(ERE_branchString) and extended_reg_exp(extended_regString) then
+	             return true;
+ end if;
+		  end if;
+		end loop;
+	    end if;    
+          end;
+      end if;
+	   return retValue;
    end extended_reg_exp;
 
+ --ERE_branch :: 	     ERE_expression
+--	       | ERE_branch  ERE_expression
    function ERE_branch(inputString : in String) return boolean is
+      retValue : boolean;
    begin
-	   return true;
+      retValue := false;
+      retValue := ERE_expression(inputString);
+
+      if retValue = false then
+	declare
+		ERE_expressionString : String(1..20);
+		ERE_branchString : String(1..20);
+	begin
+           if inputString'length > 1 then
+	   for index in inputString'first+1 .. inputString'last loop
+              ERE_expressionString := inputString(index..inputString'last);
+	      ERE_branchString := inputString(inputString'first .. index-1);
+ if ERE_expression(ERE_expressionString) and ERE_branch(ERE_branchString) then
+	      return true;
+ end if;
+	   end loop;	   
+	 end if;
+         end;
+      end if;
+
+      return retValue;
    end ERE_branch;
 
    function ERE_expression(inputString : in String) return boolean is
+     retValue : boolean;
    begin
-	   return true;
+     retValue := false;
+       if one_char_or_coll_elem_ERE(inputString) then
+	     return true;
+       end if;
+ 
+       if inputString'length = 1 then
+         declare
+		 testCharacter : Character;
+	 begin
+            testCharacter := inputString(inputString'first);
+	    if TestCharacter = '^' or testCharacter = '$' then
+		    return true;
+	    end if;
+	 end;
+       end if;
+
+      if inputSTring'length > 2 then
+      if inputString(inputString'first) = '(' 
+	 and inputString(inputString'last) = ')' then
+         declare
+		 MiddleString : String(1..20);
+	 begin
+ MiddleString := inputString(inputString'first+1 .. inputString'last-1);
+            if extended_reg_exp(MiddleString) then
+		    return true;
+	    end if;
+	 end;
+      end if;
+      end if;
+
+-- For all these types of loops, check size of string to prevent an out of
+-- bounds exception from occuring.
+     for index in inputString'first .. inputString'last loop
+        declare
+	  leftString : String(1..20);
+	  rightString : String(1..20);
+	begin
+           if inputString'length > 1 then
+           leftString := inputString(inputString'first .. index-1);
+	   rightString := inputString(index .. inputString'last);
+           if ERE_expression(leftString) and ERE_dupl_symbol(rightString) then
+		   return true;
+	   end if;
+	   end if;
+	end;
+     end loop;
+
+     return retValue;
    end ERE_expression;
 
    function one_char_or_coll_elem_ERE(inputString : in String) return boolean
