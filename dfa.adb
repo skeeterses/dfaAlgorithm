@@ -244,23 +244,68 @@ package body dfa is
    end follow_list;
 
    function expression_term(inputString : in String) return boolean is
+      retValue : boolean;
    begin
-	   return true;
+      retValue := false;
+      
+      if single_expression(inputString) or range_expression(inputString) then
+	      return true;
+      end if;
+
+	   return retValue;	   
    end expression_term;
 
+-- single_expression :: end_range
+   --                 | character_class
+   --                 | equivalence_class
+-- For this function, I'll implement character_class and equivalence_class
+   -- later on.
    function single_expression(inputString : in String) return boolean is
    begin
-	   return true;
+	   return end_range(inputString);
    end single_expression;
 
    function range_expression(inputString : in String) return boolean is
+     retValue : boolean;
+     startRangeString, endRangeString : String(1..20);
    begin
-	   return true;
+      retValue := false;   
+      if inputString(inputString'last) = '-' then
+         if inputString'length > 1 then
+  startRangeString := inputString(inputString'first..inputString'last-1);
+         if start_range(startRangeString) then
+		 return true;
+	 end if;
+	 end if;
+      end if;
+
+      if inputString'length > 1 then
+        for index in reverse inputString'first+1 .. inputString'last loop
+           startRangeString := inputString(inputString'first..index-1);
+	   endRangeString := inputString(index..inputString'last);
+	   if start_range(startRangeString) and end_range(endRangeString) then
+		   return true;
+	   end if;
+	end loop;
+      end if;
+
+     return retValue;
    end range_expression;
 
    function start_range(inputString : in String) return boolean is
+     retValue : boolean;
    begin
-	   return true;
+	   retValue := false;
+           if inputString(inputString'last) = '-' then
+              declare
+		 endRangeString : String(1..20);
+	      begin
+ endRangeString := inputString(inputString'first..inputString'last-1);
+                 return end_range(endRangeString);
+	      end;
+	   end if;
+
+	   return retValue;
    end start_range;
 
 
